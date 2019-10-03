@@ -1,0 +1,230 @@
+# Mission 1: Stop the Train Terror
+Good Morning Agent Hunt, our train services have been disrupted by ‘Evil Group’; however,
+our engineers have no way to resume the train services and we are stuck in gridlock as they
+have used advanced techniques to hack the systems. Your mission, should you choose to
+accept it, is to help us to reinstate the train services in the city.
+
+The train system, which is controlled by RF signals, has been hacked by ‘Evil Group’. From
+our analysis of the damage done, they have altered the configurations of our systems. As
+such, please gather information on the new train commands, as well as the radio frequency
+that is now used to operate the trains.
+
+Besides hacking our train systems, they have also stolen some cranes and used them to
+obstruct some of the train tracks around the city. As of now, our topmost priority is to take
+control of these cranes, and remove them from the tracks before attempting to reinstate the
+train systems.
+
+Throughout the course of this mission, Agent Dunn and Agent Ellie will be providing you with
+any assistance that you might require.
+
+As always, should you or any of your IM Force be caught or killed, the Secretary will
+disavow any knowledge of your actions. This message will self-destruct in five seconds.
+Good luck, Ethan.
+
+# Challenge 101 : Radio Frequency Analysis
+
+Hi Agent Hunt, I am Agent Dunn. I have managed to capture an RF signal, which I strongly
+believe is used to control the cranes on the tracks; please analyse it and find out what
+exactly does it do.
+
+`File : rf_dump.dat`
+
+## Step 1. Boot the Ubuntu VM
+
+Boot the provided `Ubuntu VM` VMDK machine in VMware. This virtual machine has all of the necessary kernel modules and software required to utilize the [HackRF One SDR transceiver](https://greatscottgadgets.com/hackrf/one/).
+
+<img src="001.png" align="middle" width="750"/>
+
+Login with the `nshc:nshc` credentials.
+
+<img src="002.png" align="middle" width="750"/>
+
+## Step 2. Connect the HackRF One
+
+Insert the HackRF One transceiver to an available USB port. 
+
+<img src="003.jpg" align="middle" width="750"/>
+
+Connect the HackRF One to the VMware/Ubuntu machine.
+
+<img src="004.png" align="middle" width="750"/>
+
+Verify the HackRF One was successfully connected to the VM with the following `hackrf_info` command.
+
+<img src="005.png" align="middle" width="750"/>
+
+## Step 3. Configure the GNU Radio Companion
+
+GNU Radio provides signal processing blocks to implement software radios. It can be used with low-cost RF hardware to create software-defined radios, or without hardware in a simulation-like environment. It is widely used in hobbyist, and academic environments to support both wireless communications research and real-world radio systems.
+
+For more info on the GNU Radio Companion, check out the [official wiki](https://wiki.gnuradio.org/index.php/GNURadioCompanion) and `man` page.
+
+When ready, open the `GNU Radio Companion` application.
+
+<img src="006.png" align="middle" width="750"/>
+
+Change the sample rate to 2000000. It's the lowest recommended sample rate for the HackRF and ensures the most accurate results.
+
+<img src="007.png" align="middle" width="750"/>
+
+Search for the `osmocom Source` and double-click to add it to the radion companion dashboard.
+
+<img src="008.png" align="middle" width="750"/>
+
+Right-click on the osmocom source block to modify the properties. Adjust the fields as shown below.
+
+<img src="009.png" align="middle" width="750"/>
+
+To visualize the radio frequencies being transmitted between the train controller and PLC station, add the `QT QUI Frequency Sink` module to the radio companion dashboard. Set the frequency to 433M.
+
+<img src="010.png" align="middle" width="750"/>
+
+Link the blocks by first clicking the `out` then `in` buttons as shown below.
+
+<img src="011.gif" align="middle" width="750"/>
+
+To save the captured radio frequencies to a local file, use the `File Sink` module. This will allow us to replay the captured radio activity in the future. The "file" option in the in the File Sink block will specify where the captured data is stored locally. The below example uses the /tmp directory with the "radio_capture" filename.
+
+<img src="012.png" align="middle" width="750"/>
+
+Finally, save the radio companion configuration. This is required to run the configuration and begin capturing data.
+
+<img src="013.png" align="middle" width="750"/>
+
+## Step 4. Capture the Train Controller Transmissions
+
+To start capturing transmissions, press the Execute button in the tool bar. The Qt GUI window will open shortly after. 
+
+<img src="014.gif" align="middle" width="750"/>
+
+As the train is running, press the Stop button on the train controller. 
+
+<img src="00.png" align="middle" width="750"/>
+
+As transmissions are sent from the train controller to the PLC station, noticable fluxuations will appear in the window.
+
+<img src="016.gif" align="middle" width="750"/>
+
+To stop the capture, simply close the GUI window. The capture file can be found in the /tmp directory.
+
+<img src="015.png" align="middle" width="750"/>
+
+## Step 5. Replay the Transmissions
+
+To replay the captured transmission, create a new flow graph in the radio companion as shown below.
+
+<img src="017.png" align="middle" width="750"/>
+
+The `Multiple Const` module will make the replayed signal stronger and more easily recognized by the receiver in the PLC station.
+
+The `Osmocom Sink` module is required to send the transmission out.
+
+The `Throttle` module is required to prevent the HackRF One from over-utilizing the CPU and potentially crashing the Ubuntu operating system.
+
+Save the configration to a local file, then click the Execute button to replay the transmission.
+
+<img src="00.png" align="middle" width="750"/>
+
+
+
+
+
+# Wi-Fi Hacking: WEP
+
+## Step 0. Setup the Raspberry Pi Zero
+
+- to activate the raspberry pi's wifi hotspot, no interaction is required. simply supply power and the OS will automate the rest.
+- no 5V power supply was included in the HackNYC delivery, a random Android charger will suffice
+
+<img src="w000.png" align="middle" width="750"/>
+
+## Step 1. Kill services
+
+- for those not following along in kali linux, all of the following commands require root privileges
+- kill services that may interfere with the wireless card while in monitor modde (i.e., wpa_supplicant)
+
+<img src="w001-alt.png" align="middle" width="750"/>
+
+## Step 2. Enable Monitor Mode
+
+- explain that macbooks wireless cards are lame
+- need alfa chipset w/ kali or awesome link laptop
+- identify the wireless interface and use the `airmon-ng start <interface>` command to enable monitor mode
+
+<img src="w002.png" align="middle" width="750"/>
+
+
+## Step 3. Scan Surrounding Wireless Networks
+
+- press ctrl+c to stop viewing traffic
+- the wireless ESSID may appear in the terminal as gibberish or question marks. this is caused by unsupported unicode characters (emojis) in the network name. viewing the wireless network from an iPhone will display the ESSID as designed
+- need iphone screenshot
+
+<img src="w003.png" align="middle" width="750"/>
+
+<img src="w00x.png" align="middle" width="750"/>
+
+## Step .
+
+- refine the airodump-ng command to only capture traffic specific to the target WiFi network
+
+
+```
+airodump-ng --bssid B8:27:EB:E0:36:10 --channel 6  -w /tmp/tokyoneon wlp0s20f3mon
+```
+
+<img src="w00.png" align="middle" width="750"/>
+
+## Step .
+<img src="w00.png" align="middle" width="750"/>
+## Step .
+<img src="w00.png" align="middle" width="750"/>
+## Step .
+
+<img src="w00.png" align="middle" width="750"/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
